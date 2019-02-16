@@ -20,33 +20,42 @@ for c in contours:
     # Approximates a polygonal curve(s) with the specified precision
     # epsilon – approximation accuracy, max distance between the original curve and its approximation.
     approx = cv2.approxPolyDP(c, 0.02*cv2.arcLength(c, closed=True), closed=True)
-    print('Sides found:', len(approx), end=" -> ")
+    # print('Sides found:', len(approx), end=" -> ")
     # draw shapes in colors over original image
     if len(approx) < 3:
         lines += 1
-        print('Line')
+        # print('Line')
         cv2.drawContours(img, [c], 0, (255, 0, 0), -1)
     elif len(approx) == 3:
         triangles += 1
-        print('Triangle')
+        # print('Triangle')
         cv2.drawContours(img, [c], 0, (0, 255, 0), -1)
     elif len(approx) == 4:
         squares += 1
-        print('Rectangle')
+        # print('Rectangle')
         cv2.drawContours(img, [c], 0, (0, 0, 255), -1)
     elif len(approx) >= 5:  # any more sides than square must be a circle
         circles += 1
-        print('Circle')
+        # print('Circle')
         cv2.drawContours(img, [c], 0, (255, 0, 255), -1)
 
-print('----------------------')
-print(lines, ' lines')
-print(triangles, ' triangles')
-print(squares, ' squares')
-print(circles, ' circles')
+# print('----------------------')
+# print(lines, ' lines')
+# print(triangles, ' triangles')
+# print(squares, ' squares')
+# print(circles, ' circles')
 
-cv2.imshow('thresh', thresh)
 cv2.imshow('original grayscale', gray)
 cv2.imshow('colored shapes', img)
+
+# load base output image for display of species found
+out = cv2.imread('output.png')
+# add text to image to format output like in manual
+cv2.putText(out, str(circles), (150,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+cv2.putText(out, str(triangles), (150,230), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+cv2.putText(out, str(lines), (150,370), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+cv2.putText(out, str(squares), (150,510), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+cv2.imshow('out', out)
+
 cv2.waitKey(0)  # hit esc to exit
 cv2.destroyAllWindows()
