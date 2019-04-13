@@ -55,11 +55,8 @@ img = cv2.imread('crack_horiz_above.PNG')  # read from file
 IMG_HEIGHT = len(img)
 IMG_WIDTH = len(img[0])
 
-
-
 def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
-
 
 # load the image, convert it to grayscale, and blur it slightly
 image = cv2.imread('crack_horiz_above.PNG')
@@ -72,20 +69,35 @@ edged = cv2.Canny(gray, 50, 100)
 edged = cv2.dilate(edged, None, iterations=1)
 edged = cv2.erode(edged, None, iterations=1)
 
+edged = cv2.copyMakeBorder(edged, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=[255,255,255])
+
 # find contours in the edge map
-cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL,
-                        cv2.CHAIN_APPROX_SIMPLE)
+cnts = cv2.findContours(edged.copy(), cv2.RETR_TREE,
+                        cv2.CHAIN_APPROX_NONE)
 cnts = imutils.grab_contours(cnts)
 
 # sort the contours from left-to-right and initialize the
 # 'pixels per metric' calibration variable
-(cnts, _) = contours.sort_contours(cnts)
-pixelsPerMetric = None
+# (cnts, _) = contours.sort_contours(cnts)
+
+# sort largest to smallest
+cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
+
+# loop through contours to find a red one
+for i, c in enumerate(cnts):
+    br = cv2.boundingRect(cnts[i])
+    c1 = cv2.mean(br)
+    # c1 = cv2.mean(br)
+    # mask = np.zeros(gray.shape, np.uint8)
+    print(c1)
+
+pixelsPerMetric = 37/1.85 # 37 px = 1.85 cm
 
 # loop over the contours individually
 for c in cnts:
+
     # if the contour is not sufficiently large, ignore it
-    if cv2.contourArea(c) < 100:
+    if cv2.contourArea(c) > 40*500:
         continue
 
     # compute the rotated bounding box of the contour
@@ -136,23 +148,27 @@ for c in cnts:
     # if the pixels per metric has not been initialized, then
     # compute it as the ratio of pixels to supplied metric
     # (in this case, inches)
-    if pixelsPerMetric is None:
-        pixelsPerMetric = dB / IMG_WIDTH
+    if True: #pixelsPerMetric is None:
+        #pixelsPerMetric = dB / 500#IMG_WIDTH
 
         # compute the size of the object
         dimA = dA / pixelsPerMetric
         dimB = dB / pixelsPerMetric
 
+        print(dA, " : ", dB)
         print(dimA, " : ", dimB)
 
         # draw the object sizes on the image
-        cv2.putText(orig, "{:.1f}in".format(dimA),
+        cv2.putText(orig, "{:.3f}cm".format(dimA),
                     (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
                     0.65, (0, 0, 0), 2)
-        cv2.putText(orig, "{:.1f}in".format(dimB),
+        cv2.putText(orig, "{:.3f}cm".format(dimB),
                     (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
                     0.65, (0, 0, 0), 2)
+
+        #cv2.drawContours(orig, cnts, -1, (0, 255, 0), 1)
 
         # show the output image
         cv2.imshow("Image", orig)
         cv2.waitKey(0)
+cv2.waitKey(0)
