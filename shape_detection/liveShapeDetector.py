@@ -5,8 +5,6 @@ import os
 
 # https://docs.opencv.org/2.4/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html
 
-# square vs rectangle ???? line will be rectangle
-
 # start videoCapture
 cap = cv2.VideoCapture(0)
 
@@ -20,13 +18,17 @@ while True:
     # gray = cv2.blur(gray, (10, 10), 0)
     # gray = cv2.GaussianBlur(gray, (9,9), 0)
     # gray = cv2.medianBlur(gray, 5) # not so good
-    # gray = cv2.bilateralFilter(gray,9,75,75) # not so good
+    gray = cv2.bilateralFilter(gray,9,75,75) # not so good
 
     # identify pixels within (127, 255) intensity range (shapes)
-    _, thresh = cv2.threshold(gray, 127, 255, 1)
+    # _, thresh = cv2.threshold(gray, 127, 255, 1)
+
+    # find edges
+    edges = cv2.Canny(gray, 75, 100)
 
     # find shapes
-    contours, _ = cv2.findContours(thresh, 1, 2)
+    # contours, _ = cv2.findContours(thresh, 1, 2)
+    contours, _ = cv2.findContours(edges, 1, 2)
     print(len(contours), ' Shapes identified')
 
     triangles, squares, circles, lines = (0, 0, 0, 0)  # used to count shapes
@@ -36,15 +38,15 @@ while True:
         # Approximates a polygonal curve(s) with the specified precision
         # epsilon – approximation accuracy, max distance between the original curve and its approximation.
         approx = cv2.approxPolyDP(c, 0.02*cv2.arcLength(c, closed=True), closed=True)
-        print('Sides found:', len(approx), end=" -> ")
+        # print('Sides found:', len(approx), end=" -> ")
         # draw shapes in colors over original image
         if len(approx) < 3:
             lines += 1
-            print('Line')
+            # print('Line')
             cv2.drawContours(img, [c], 0, (255, 0, 0), -1)
         elif len(approx) == 3:
             triangles += 1
-            print('Triangle')
+            # print('Triangle')
             cv2.drawContours(img, [c], 0, (0, 255, 0), -1)
         elif len(approx) == 4:
             # could be either a square or line -> check side lengths
@@ -54,7 +56,7 @@ while True:
             side2 = math.sqrt((approx[1][0][0] - approx[2][0][0]) ** 2 + (approx[1][0][1] - approx[2][0][1]) ** 2)
             if abs(side1 - side2) < 20:
                 squares += 1
-                print('Square')
+                # print('Square')
                 cv2.drawContours(img, [c], 0, (0, 0, 255), -1)
             else:
                 lines += 1
@@ -62,7 +64,7 @@ while True:
                 cv2.drawContours(img, [c], 0, (255, 0, 0), -1)
         elif len(approx) >= 5:  # any more sides than square must be a circle
             circles += 1
-            print('Circle')
+            # print('Circle')
             cv2.drawContours(img, [c], 0, (255, 0, 255), -1)
 
     # print('----------------------')
